@@ -23,9 +23,14 @@ export default function POS() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [newProductName, setNewProductName] = useState("");
   const [newProductPrice, setNewProductPrice] = useState("");
+  const [paymentComplete, setPaymentComplete] = useState(false);
+  const [cashGiven, setCashGiven] = useState("");
+  const [change, setChange] = useState<number | null>(null);
+  const [error, setError] = useState("");
 
-  // Add product to cart or increase quantity if it exists
+  // Add product to cart or increase quantity
   const addToCart = (product: Product) => {
+    resetPaymentState();
     setCart((prevCart) => {
       const existingItem = prevCart.find(item => item.product.id === product.id);
       if (existingItem) {
@@ -40,8 +45,9 @@ export default function POS() {
     });
   };
 
-  // Decrease quantity or remove from cart if quantity is 1
+  // Decrease quantity or remove from cart
   const removeFromCart = (productId: number) => {
+    resetPaymentState();
     setCart((prevCart) =>
       prevCart
         .map(item =>
@@ -53,12 +59,16 @@ export default function POS() {
     );
   };
 
+  // Remove product from list and cart
   const removeProduct = (id: number) => {
+    resetPaymentState();
     setProducts((prev) => prev.filter((p) => p.id !== id));
     setCart((prevCart) => prevCart.filter((item) => item.product.id !== id));
   };
 
+  // Add new product
   const addProduct = () => {
+    resetPaymentState();
     const price = parseFloat(newProductPrice);
     if (!newProductName || isNaN(price)) return;
 
@@ -73,7 +83,37 @@ export default function POS() {
     setNewProductPrice("");
   };
 
-  const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0).toFixed(2);
+  // Handle purchase
+  const handleBuy = () => {
+    const totalNum = parseFloat(total);
+    const cash = parseFloat(cashGiven);
+
+    if (isNaN(cash)) {
+      setError("Please enter a valid cash amount.");
+      return;
+    }
+
+    if (cash < totalNum) {
+      setError(`Insufficient cash. You need $${(totalNum - cash).toFixed(2)} more.`);
+      return;
+    }
+
+    setChange(cash - totalNum);
+    setPaymentComplete(true);
+    setError("");
+    setCart([]);
+    setCashGiven("");
+  };
+
+  const resetPaymentState = () => {
+    setPaymentComplete(false);
+    setChange(null);
+    setError("");
+  };
+
+  const total = cart
+    .reduce((sum, item) => sum + item.product.price * item.quantity, 0)
+    .toFixed(2);
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 md:p-10 font-sans">
@@ -85,9 +125,7 @@ export default function POS() {
         <div className="grid md:grid-cols-2 gap-8">
           {/* Product List */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-              Products
-            </h2>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Products</h2>
 
             <ul className="space-y-4 mb-6">
               {products.map((product) => (
@@ -117,10 +155,9 @@ export default function POS() {
               ))}
             </ul>
 
-            {/* Add New Product Form */}
+            {/* Add New Product */}
             <div className="pt-4 border-t text-center">
               <h3 className="text-lg font-medium text-gray-700 mb-4">Add New Product</h3>
-
               <div className="flex flex-col md:flex-row justify-center items-center gap-4">
                 <input
                   type="text"
@@ -147,11 +184,9 @@ export default function POS() {
             </div>
           </div>
 
-          {/* Cart */}
+          {/* Cart Section */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-              Cart
-            </h2>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4">Cart</h2>
 
             {cart.length === 0 ? (
               <p className="text-gray-500 italic">Your cart is empty.</p>
@@ -179,10 +214,43 @@ export default function POS() {
               </ul>
             )}
 
-            <div className="mt-6 border-t pt-4 text-right">
+            {/* Total and Payment */}
+            <div className="mt-6 border-t pt-4 text-right space-y-4">
               <p className="text-lg font-semibold text-gray-800">
                 Total: <span className="text-green-600">${total}</span>
               </p>
+
+              <div className="flex justify-end items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">Cash Given:</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={cashGiven}
+                  onChange={(e) => setCashGiven(e.target.value)}
+                  placeholder="0.00"
+                  className="w-28 px-2 py-1 border rounded-md"
+                />
+              </div>
+
+              <button
+                onClick={handleBuy}
+                disabled={cart.length === 0}
+                className={`w-full px-4 py-2 rounded-md text-white transition-colors ${cart.length === 0
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700"
+                  }`}
+              >
+                Buy
+              </button>
+
+              {/* Messages */}
+              {error && <p className="text-red-600">{error}</p>}
+              {paymentComplete && (
+                <p className="text-green-600 font-medium">
+                  ✅ Payment successful! Change due: ${change?.toFixed(2)}
+                </p>
+              )}
             </div>
           </div>
         </div>
