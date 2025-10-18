@@ -28,7 +28,6 @@ export default function POS() {
   const [change, setChange] = useState<number | null>(null);
   const [error, setError] = useState("");
 
-  // Add product to cart or increase quantity
   const addToCart = (product: Product) => {
     resetPaymentState();
     setCart((prevCart) => {
@@ -45,7 +44,6 @@ export default function POS() {
     });
   };
 
-  // Decrease quantity or remove from cart
   const removeFromCart = (productId: number) => {
     resetPaymentState();
     setCart((prevCart) =>
@@ -59,18 +57,16 @@ export default function POS() {
     );
   };
 
-  // Remove product from list and cart
   const removeProduct = (id: number) => {
     resetPaymentState();
     setProducts((prev) => prev.filter((p) => p.id !== id));
     setCart((prevCart) => prevCart.filter((item) => item.product.id !== id));
   };
 
-  // Add new product
   const addProduct = () => {
     resetPaymentState();
     const price = parseFloat(newProductPrice);
-    if (!newProductName || isNaN(price)) return;
+    if (!newProductName || isNaN(price) || price <= 0) return;
 
     const newProduct: Product = {
       id: Date.now(),
@@ -83,7 +79,6 @@ export default function POS() {
     setNewProductPrice("");
   };
 
-  // Handle purchase
   const handleBuy = () => {
     const totalNum = parseFloat(total);
     const cash = parseFloat(cashGiven);
@@ -116,8 +111,8 @@ export default function POS() {
     .toFixed(2);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 md:p-10 font-sans">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gray-100 p-6 md:p-10 font-sans text-gray-800">
+      <div className="max-w-6xl mx-auto">
         <h1 className="text-4xl font-bold text-center text-gray-800 mb-10">
           🛒 Simple POS System
         </h1>
@@ -127,26 +122,31 @@ export default function POS() {
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-2xl font-semibold text-gray-700 mb-4">Products</h2>
 
-            <ul className="space-y-4 mb-6">
+            <ul className="space-y-4 mb-6 max-h-96 overflow-y-auto pr-2">
               {products.map((product) => (
                 <li
                   key={product.id}
-                  className="flex justify-between items-center p-4 bg-gray-50 rounded border hover:shadow transition-shadow"
+                  className="flex justify-between items-center p-4 bg-gray-50 rounded border border-gray-200 hover:shadow transition-shadow"
                 >
-                  <span className="text-gray-800">
-                    {product.name} –{" "}
-                    <span className="font-medium">${product.price.toFixed(2)}</span>
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 text-blue-700 flex items-center justify-center rounded-full font-bold">
+                      {product.name[0].toUpperCase()}
+                    </div>
+                    <span className="text-gray-800">
+                      {product.name} –{" "}
+                      <span className="font-medium text-blue-600">${product.price.toFixed(2)}</span>
+                    </span>
+                  </div>
                   <div className="flex space-x-2">
                     <button
                       onClick={() => addToCart(product)}
-                      className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+                      className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition"
                     >
                       Add
                     </button>
                     <button
                       onClick={() => removeProduct(product.id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600 transition-colors"
+                      className="px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600 transition"
                     >
                       Delete
                     </button>
@@ -164,7 +164,7 @@ export default function POS() {
                   placeholder="Name"
                   value={newProductName}
                   onChange={(e) => setNewProductName(e.target.value)}
-                  className="w-full md:w-1/3 px-3 py-2 border rounded-md"
+                  className="w-full md:w-1/3 px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500"
                 />
                 <input
                   type="number"
@@ -172,11 +172,11 @@ export default function POS() {
                   placeholder="Price"
                   value={newProductPrice}
                   onChange={(e) => setNewProductPrice(e.target.value)}
-                  className="w-full md:w-1/3 px-3 py-2 border rounded-md"
+                  className="w-full md:w-1/3 px-3 py-2 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500"
                 />
                 <button
                   onClick={addProduct}
-                  className="px-4 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
+                  className="px-4 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition text-sm"
                 >
                   Add Product
                 </button>
@@ -189,9 +189,9 @@ export default function POS() {
             <h2 className="text-2xl font-semibold text-gray-700 mb-4">Cart</h2>
 
             {cart.length === 0 ? (
-              <p className="text-gray-500 italic">Your cart is empty.</p>
+              <p className="text-gray-500 italic text-center">🛒 Your cart is empty. Add some products!</p>
             ) : (
-              <ul className="space-y-4">
+              <ul className="space-y-4 max-h-80 overflow-y-auto pr-2">
                 {cart.map((item, index) => (
                   <li
                     key={index}
@@ -199,13 +199,13 @@ export default function POS() {
                   >
                     <span className="text-gray-800">
                       {item.product.name} × {item.quantity} –{" "}
-                      <span className="font-medium">
+                      <span className="font-medium text-green-600">
                         ${(item.product.price * item.quantity).toFixed(2)}
                       </span>
                     </span>
                     <button
                       onClick={() => removeFromCart(item.product.id)}
-                      className="px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600 transition-colors"
+                      className="px-3 py-1 bg-red-500 text-white rounded-md text-sm hover:bg-red-600 transition"
                     >
                       Remove
                     </button>
@@ -229,27 +229,31 @@ export default function POS() {
                   value={cashGiven}
                   onChange={(e) => setCashGiven(e.target.value)}
                   placeholder="0.00"
-                  className="w-28 px-2 py-1 border rounded-md"
+                  className="w-28 px-2 py-1 border rounded-md shadow-sm focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <button
                 onClick={handleBuy}
                 disabled={cart.length === 0}
-                className={`w-full px-4 py-2 rounded-md text-white transition-colors ${cart.length === 0
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-green-600 hover:bg-green-700"
+                className={`w-full px-4 py-2 rounded-md text-white font-medium transition ${cart.length === 0
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700"
                   }`}
               >
                 Buy
               </button>
 
               {/* Messages */}
-              {error && <p className="text-red-600">{error}</p>}
+              {error && (
+                <div className="px-4 py-2 bg-red-100 text-red-700 rounded-md border border-red-300">
+                  ❌ {error}
+                </div>
+              )}
               {paymentComplete && (
-                <p className="text-green-600 font-medium">
-                  ✅ Payment successful! Change due: ${change?.toFixed(2)}
-                </p>
+                <div className="px-4 py-2 bg-green-100 text-green-700 rounded-md border border-green-300">
+                  ✅ Payment successful! Change due: <strong>${change?.toFixed(2)}</strong>
+                </div>
               )}
             </div>
           </div>
